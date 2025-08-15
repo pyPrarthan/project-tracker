@@ -2,7 +2,8 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import mongoose from 'mongoose'
-import projectRoutes from './routes/projects.js'
+
+import projectRoutes from "./routes/projects.js";
 
 const app = express()
 app.use(cors())
