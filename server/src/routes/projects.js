@@ -1,13 +1,18 @@
-import mongoose from "mongoose";
+import { Router } from "express";
+import {
+  createProject,
+  listProjects,
+  getProject,
+  updateProject,
+  deleteProject,
+} from "../controllers/projectController.js";
 
-const ProjectSchema = new mongoose.Schema(
-    {
-        name: {type: String, required: true, minlength: 3}, 
-        description: {type: String, default: ""}, 
-        status: {type: String, enum: ['planned', 'active', 'done'], default: 'planned'}, 
-        githubRepos: [{type: String}] //eg 'pyPrarthan/github-profile-analyzer'
-    }, 
-    { timestamps: true }
-)
+const router = Router();
 
-export default mongoose.model("Project", ProjectSchema);
+router.get("/", listProjects);
+router.post("/", createProject);
+router.get("/:id", getProject);
+router.put("/:id", updateProject);
+router.delete("/:id", deleteProject);
+
+export default router;
