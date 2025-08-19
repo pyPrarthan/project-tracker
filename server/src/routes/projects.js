@@ -5,6 +5,7 @@ import {
   getProject,
   updateProject,
   deleteProject,
+  getProjectGithub,
 } from "../controllers/projectController.js";
 
 const router = Router();
