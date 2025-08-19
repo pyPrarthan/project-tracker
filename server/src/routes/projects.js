@@ -15,4 +15,8 @@ router.get("/:id", getProject);
 router.put("/:id", updateProject);
 router.delete("/:id", deleteProject);
 
+// NEW  
+router.get("/:id/github", getProjectGithub);
+
+
 export default router;

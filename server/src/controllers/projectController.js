@@ -1,4 +1,5 @@
 import Project from '../models/projects.js'
+import { getReposForProject } from '../../services/githubService.js';
 
 export const createProject = async (req, res)=>{
     try{
@@ -47,4 +48,34 @@ export const deleteProject = async (req, res)=>{
         return res.status(404).json({error: "Project not found."});
     }
     res.json({ok: true, message: "Project deleted successfully."});
+}
+
+
+// GitHub fetching logic 
+export const getProjectGithub =  async (req, res) =>{
+    try{
+        const {id} = req.params
+        const forceRefresh = req.query.forceRefresh === '1' || req.query.forceRefresh === 'true';
+
+        const project = await Project.findById(id)
+        if (!project) {
+            return res.status(404).json({message: "Project not found."});
+        }
+
+        if (!project.githubRepos || project.githubRepos.length === 0) {
+            return res.json({projectId: project._id, summary: {total: 0, errors: 0, fromGithub: 0, fromCache: 0}, repos:[]});
+
+        }
+        const repos = await getReposForProject(project, {forceRefresh})
+        const summary = {
+            total: repos.length,
+            errors: repos.filter(r => r.error).length,
+            fromGithub: repos.filter(r => r.source === 'github').length,
+            fromCache: repos.filter(r => r.source === 'github').length
+        }
+        res.json({projectId: project._id, summary, repos});
+    }catch(err){
+        console.log(err)
+        res.status(500).json({error: "Failed to fetch Github data"});
+    }
 }
