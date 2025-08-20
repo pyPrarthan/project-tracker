@@ -16,12 +16,12 @@ const TaskSchema = new mongoose.Schema(
             default: "todo", 
             index: true,
         },
-        dueDate:{type: Date, default: null, index: ture}, 
+        dueDate:{type: Date, default: null, index: true}, 
     },
     {timestamps: true}
 )
 
-// Helpful compuond index for common queries
+// Helpful compound index for common queries
 TaskSchema.index({projectId: 1, status: 1, dueDate: 1, createdAt: -1})
 
 export default mongoose.model("Task", TaskSchema)
