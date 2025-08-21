@@ -109,10 +109,29 @@ export const deleteTask = async (req, res)=>{
         if(!deleted) {
             return res.status(404).json({ error: "Task not found" });
         }
-        
+
         return res.json({message: "Task deleted successfully"})
 
     }catch(err){
         return res.status(400).json({error: err.message || "Failed to delete Task!"})
     }
+}
+
+/*
+    Helper: compute tasks summary for a project
+    Returns: {todo, inProgess, done, total}
+*/
+
+export const getTaskSummaryForProject = async (projectId) => {
+  const rows = await Task.aggregate([
+    { $match: { projectId: new Task.mongo.ObjectId(projectId) } },
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+  ]);
+
+  const map = rows.reduce((acc, r) => ((acc[r._id] = r.count), acc), {});
+  const todo = map["todo"] || 0;
+  const inProgress = map["in-progress"] || 0;
+  const done = map["done"] || 0;
+
+  return { todo, inProgress, done, total: todo + inProgress + done };
 }
