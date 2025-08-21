@@ -97,3 +97,22 @@ export const updateTask = async (req, res)=>{
         return res.status(400).json({error: err.message || "Failed to update Task!"})
     }
 }
+
+/*
+    DELETE /api/tasks/:taskId
+*/
+
+export const deleteTask = async (req, res)=>{
+    try{
+        const {taskId} = req.params
+        const deleted = await Task.findByIdAndDelete(taskId)
+        if(!deleted) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+        
+        return res.json({message: "Task deleted successfully"})
+
+    }catch(err){
+        return res.status(400).json({error: err.message || "Failed to delete Task!"})
+    }
+}
