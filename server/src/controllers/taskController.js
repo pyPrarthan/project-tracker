@@ -71,3 +71,29 @@ export const listTaskForProject = async (req, res) => {
   }
 };
 
+/* 
+    PUT /api/tasks/:taskId
+*/
+
+export const updateTask = async (req, res)=>{
+    try{
+        const {taskId} = req.params
+        const updates = {...req.body} // this is copy, ...req.body i.e. spread operator, updates is a shallow copy of req.body
+
+        if("dueDate" in updates){
+            updates.dueDate = updates.dueDate ? new Date(updates.dueDate) : null
+        }
+
+        const updated = await Task.findByIdAndUpdate(taskId, updates, {
+            new: true, 
+            runValidators: true,
+        })
+        
+        if(!updated) return res.status(404).json({error: "Task not found"})
+
+        return res.json(updated)
+        
+    }catch(err){
+        return res.status(400).json({error: err.message || "Failed to update Task!"})
+    }
+}
