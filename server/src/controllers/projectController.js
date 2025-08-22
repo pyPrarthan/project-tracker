@@ -1,5 +1,6 @@
 import Project from '../models/projects.js'
 import { getReposForProject } from '../../services/githubService.js';
+import { getTaskSummaryForProject } from './taskController.js';
 
 export const createProject = async (req, res)=>{
     try{
@@ -21,13 +22,13 @@ export const listProjects = async(req, res)=>{
 }
 
 
-export const getProject = async (req, res)=>{
-    const p = await Project.findById(req.params.id)
-    if(!p){
-        return res.status(404).json({error: "Project not found."});
-    }
-    res.json(p);
-}
+// export const getProject = async (req, res)=>{
+//     const p = await Project.findById(req.params.id)
+//     if(!p){
+//         return res.status(404).json({error: "Project not found."});
+//     }
+//     res.json(p);
+// }
 
 export const updateProject = async (req, res)=>{
     const {name, description, status, githubRepos} = req.body
@@ -48,6 +49,21 @@ export const deleteProject = async (req, res)=>{
         return res.status(404).json({error: "Project not found."});
     }
     res.json({ok: true, message: "Project deleted successfully."});
+}
+
+export const getProject = async (req, res)=>{
+    try{
+        const p = await Project.findById(req.params.id).lean()
+        if(!p){
+            return res.status(404).json({error: "Project not found."});
+        }
+
+        const tasksSummary = await getTaskSummaryForProject(req.params.id)
+        return res.json({...p, tasksSummary})
+
+    }catch(err){
+        return res.status(500).json({error: "Failed to fetch project."})
+    }
 }
 
 
