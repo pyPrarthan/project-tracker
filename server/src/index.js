@@ -4,7 +4,7 @@ import cors from 'cors'
 import mongoose from 'mongoose'
 
 import projectRoutes from "./routes/projects.js";
-import taskRoutes from '../routes/tasks.js';
+import taskRoutes from './routes/tasks.js';
 
 const app = express()
 app.use(cors())
