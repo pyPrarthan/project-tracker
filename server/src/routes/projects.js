@@ -1,23 +1,19 @@
 import { Router } from "express";
 import {
-  createProject,
-  listProjects,
-  getProject,
-  updateProject,
-  deleteProject,
-  getProjectGithub,
-} from "../controllers/projectController.js";
+  createTask,
+  listTasksForProject,
+  updateTask,
+  deleteTask,
+} from "../controllers/taskController.js";
 
 const router = Router();
 
-router.get("/", listProjects);
-router.post("/", createProject);
-router.get("/:id", getProject);
-router.put("/:id", updateProject);
-router.delete("/:id", deleteProject);
+// nested (by project)
+router.post("/projects/:id/tasks", createTask);
+router.get("/projects/:id/tasks", listTasksForProject);
 
-// NEW  
-router.get("/:id/github", getProjectGithub);
-
+// by task id
+router.put("/tasks/:taskId", updateTask);
+router.delete("/tasks/:taskId", deleteTask);
 
 export default router;
