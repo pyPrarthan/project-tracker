@@ -4,6 +4,7 @@ import cors from 'cors'
 import mongoose from 'mongoose'
 
 import projectRoutes from "./routes/projects.js";
+import taskRoutes from '../routes/tasks.js';
 
 const app = express()
 app.use(cors())
@@ -17,6 +18,7 @@ app.get('/health', (req, res)=>{
 
 // Routes
 app.use('/api/projects', projectRoutes)
+app.use('/api', taskRoutes)
 
 const PORT = process.env.PORT || 4000 
 const MONGO_URI = process.env.MONGO_URI
