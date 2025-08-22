@@ -62,6 +62,7 @@ export const getProject = async (req, res)=>{
         return res.json({...p, tasksSummary})
 
     }catch(err){
+        console.error("getProject error",err)
         return res.status(500).json({error: "Failed to fetch project."})
     }
 }

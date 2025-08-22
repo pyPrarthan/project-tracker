@@ -1,6 +1,8 @@
 import Project from '../models/projects.js'
 import Task from "../models/tasks.js"
 
+import mongoose from 'mongoose'
+
 // POST /api/projects/:id/tasks
 
 export const createTask = async (req, res) =>{
@@ -123,8 +125,13 @@ export const deleteTask = async (req, res)=>{
 */
 
 export const getTaskSummaryForProject = async (projectId) => {
+  // Validate id to avoid cast errors
+  if (!mongoose.Types.ObjectId.isValid(projectId)) {
+    return { todo: 0, inProgress: 0, done: 0, total: 0 };
+  }
+
   const rows = await Task.aggregate([
-    { $match: { projectId: new Task.mongo.ObjectId(projectId) } },
+    { $match: { projectId: new mongoose.Types.ObjectId(projectId) } },
     { $group: { _id: "$status", count: { $sum: 1 } } },
   ]);
 
@@ -134,4 +141,4 @@ export const getTaskSummaryForProject = async (projectId) => {
   const done = map["done"] || 0;
 
   return { todo, inProgress, done, total: todo + inProgress + done };
-}
+};
