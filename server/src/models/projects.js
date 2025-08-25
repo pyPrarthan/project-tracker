@@ -24,7 +24,8 @@ const ProjectSchema = new mongoose.Schema(
     description: { type: String, default: "" },
     status: { type: String, enum: ["planned", "active", "done"], default: "planned" },
     githubRepos: [{ type: String }], // e.g. "pyPrarthan/github-profile-analyzer"
-    repoCache: { type: [RepoCacheSchema], default: [] }    // ⬅️ add this
+    repoCache: { type: [RepoCacheSchema], default: [] },    // ⬅️ add this
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true } 
   },
   { timestamps: true }
 );
