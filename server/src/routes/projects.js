@@ -1,5 +1,6 @@
 // server/src/routes/projects.js
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.js";
 import {
   createProject,
   listProjects,
@@ -11,11 +12,14 @@ import {
 
 const router = Router();
 
-router.post("/", createProject);
-router.get("/", listProjects);
-router.get("/:id", getProject);
-router.put("/:id", updateProject);
-router.delete("/:id", deleteProject);
-router.get("/:id/github", getProjectGithub);
+// All project routes require auth
+router.post("/", requireAuth, createProject);
+router.get("/", requireAuth, listProjects);
+router.get("/:id", requireAuth, getProject);
+router.put("/:id", requireAuth, updateProject);
+router.delete("/:id", requireAuth, deleteProject);
+
+// GitHub cache/fetch for a project (also protected)
+router.get("/:id/github", requireAuth, getProjectGithub);
 
 export default router;
