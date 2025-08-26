@@ -22,7 +22,8 @@ const TaskSchema = new mongoose.Schema(
     {timestamps: true}
 )
 
-// Helpful compound index for common queries
-TaskSchema.index({projectId: 1, status: 1, dueDate: 1, createdAt: -1})
+// 🔑 Helpful compound indexes
+TaskSchema.index({ projectId: 1, status: 1, dueDate: 1, createdAt: -1 });
+TaskSchema.index({ createdBy: 1, projectId: 1, createdAt: -1 }); // 👈 new
 
 export default mongoose.model("Task", TaskSchema)

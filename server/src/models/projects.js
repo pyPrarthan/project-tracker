@@ -30,4 +30,7 @@ const ProjectSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// 🔑 Index to speed up "all projects for user" queries
+ProjectSchema.index({ createdBy: 1, createdAt: -1 });
+
 export default mongoose.model("Project", ProjectSchema);
