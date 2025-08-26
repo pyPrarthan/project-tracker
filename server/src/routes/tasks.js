@@ -1,20 +1,17 @@
-// server/src/routes/tasks.js
 import { Router } from "express";
+import { requireAuth } from "../middleware/auth.js";
 import {
   createTask,
-  listTaskForProject, // matches your current controller export name
-  // updateTask,      // add when ready
-  // deleteTask,      // add when ready
+  listTasksForProject, // ← make sure this has the “s”
+  updateTask,
+  deleteTask,
 } from "../controllers/taskController.js";
 
 const router = Router();
 
-// nested under a project
-router.post("/projects/:id/tasks", createTask);
-router.get("/projects/:id/tasks", listTaskForProject);
-
-// when you add these:
-// router.put("/tasks/:taskId", updateTask);
-// router.delete("/tasks/:taskId", deleteTask);
+router.post("/projects/:id/tasks", requireAuth, createTask);
+router.get("/projects/:id/tasks", requireAuth, listTasksForProject); // ← use the same name here
+router.put("/tasks/:taskId", requireAuth, updateTask);
+router.delete("/tasks/:taskId", requireAuth, deleteTask);
 
 export default router;
