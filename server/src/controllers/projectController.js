@@ -1,6 +1,24 @@
-import Project from "../models/projects.js"; // matches your file tree
+import mongoose from "mongoose";
+import Project from "../models/projects.js";
+import Task from "../models/tasks.js";
 import { getReposForProject } from "../../services/githubService.js";
-import { getTaskSummaryForProject } from "./taskController.js"; // keep if you already expose this
+
+// local helper to avoid circular import
+const getTaskSummaryForProject = async (projectId) => {
+  const counts = await Task.aggregate([
+    { $match: { projectId: new mongoose.Types.ObjectId(projectId) } },
+    { $group: { _id: "$status", count: { $sum: 1 } } },
+  ]);
+
+  const summary = { todo: 0, inProgress: 0, done: 0, total: 0 };
+  for (const { _id, count } of counts) {
+    if (_id === "todo") summary.todo = count;
+    if (_id === "in-progress") summary.inProgress = count;
+    if (_id === "done") summary.done = count;
+    summary.total += count;
+  }
+  return summary;
+};
 
 // Optional: small helper to keep checks DRY
 const isOwnerOrAdmin = (project, user) =>
@@ -17,12 +35,10 @@ export const createProject = async (req, res) => {
     } = req.body;
 
     if (!name || name.trim().length < 3) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Project name is required and must be at least 3 characters long.",
-        });
+      return res.status(400).json({
+        error:
+          "Project name is required and must be at least 3 characters long.",
+      });
     }
 
     const project = await Project.create({
