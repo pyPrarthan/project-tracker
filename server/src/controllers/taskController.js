@@ -1,144 +1,55 @@
-import Project from '../models/projects.js'
-import Task from "../models/tasks.js"
+import Task from "../models/task.js";
+import Project from "../models/project.js";
 
-import mongoose from 'mongoose'
+export const createTask = async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  if (!project) return res.status(404).json({ message: "Project not found" });
+  if (req.user.role !== "admin" && String(project.createdBy) !== req.user.id)
+    return res.status(403).json({ message: "Forbidden" });
 
-// POST /api/projects/:id/tasks
-
-export const createTask = async (req, res) =>{
-    try{
-        const {id: projectId} = req.params
-        const {title, description ="", status = "todo", dueDate = null} = req.body
-
-        const exists = await Project.exists({_id: projectId})
-        if (!exists){
-            return res.status(404).json({error: "Project not found"})
-        }
-
-        const task = await Task.create({
-            projectId,
-            title,
-            description,
-            status,
-            dueDate: dueDate ? new Date(dueDate) : null
-        })
-
-        return res.status(201).json({task})
-
-    }catch(err){
-        return res.status(400).json({error: err.message || "Failed to create Task!"})
-    }
-}
-/*
- * GET /api/projects/:id/tasks
- * Query: status=todo|in-progress|done, q=<search in title>, sort, page, limit
- * sort: dueDate|createdAt|updatedAt|title|status (prefix with "-" for desc)
-*/
-
-export const listTaskForProject = async (req, res) => {
-  try {
-    const { id: projectId } = req.params;
-    const { status, q, sort = "-createdAt", page = 1, limit = 10 } = req.query;
-
-    const exists = await Project.exists({ _id: projectId });
-    if (!exists) return res.status(404).json({ message: "Project not found" });
-
-    const filter = { projectId };
-    if (status) filter.status = status;
-    if (q) filter.title = { $regex: q, $options: "i" };
-
-    const pg = Math.max(parseInt(page, 10) || 1, 1);
-    const lim = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
-
-    const sortField = sort.replace(/^-/, "");
-    const sortDir = sort.startsWith("-") ? -1 : 1;
-    const allowed = new Set(["dueDate","createdAt","updatedAt","title","status",]);
-    const sortOpt = allowed.has(sortField)
-      ? { [sortField]: sortDir }
-      : { createdAt: -1 };
-
-    const [items, total] = await Promise.all([
-      Task.find(filter).sort(sortOpt).skip((pg - 1) * lim).limit(lim).lean(),Task.countDocuments(filter),
-    ]);
-
-    return res.json({
-      items,
-      page: pg,
-      limit: lim,
-      total,
-      totalPages: Math.ceil(total / lim),
-    });
-  } catch (err) {
-    return res.status(500).json({ message: "Failed to list tasks!" });
-  }
+  const { title, description, status, dueDate } = req.body;
+  const task = await Task.create({
+    projectId: project._id,
+    title,
+    description,
+    status,
+    dueDate,
+    createdBy: req.user.id,
+  });
+  res.status(201).json(task);
 };
 
-/* 
-    PUT /api/tasks/:taskId
-*/
+export const listTasksForProject = async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  if (!project) return res.status(404).json({ message: "Project not found" });
+  if (req.user.role !== "admin" && String(project.createdBy) !== req.user.id)
+    return res.status(403).json({ message: "Forbidden" });
+  const tasks = await Task.find({ projectId: project._id })
+    .sort({ createdAt: -1 })
+    .lean();
+  res.json(tasks);
+};
 
-export const updateTask = async (req, res)=>{
-    try{
-        const {taskId} = req.params
-        const updates = {...req.body} // this is copy, ...req.body i.e. spread operator, updates is a shallow copy of req.body
+export const updateTask = async (req, res) => {
+  const task = await Task.findById(req.params.taskId);
+  if (!task) return res.status(404).json({ message: "Task not found" });
+  const project = await Project.findById(task.projectId);
+  if (!project) return res.status(404).json({ message: "Project not found" });
+  if (req.user.role !== "admin" && String(project.createdBy) !== req.user.id)
+    return res.status(403).json({ message: "Forbidden" });
 
-        if("dueDate" in updates){
-            updates.dueDate = updates.dueDate ? new Date(updates.dueDate) : null
-        }
+  Object.assign(task, req.body);
+  await task.save();
+  res.json(task);
+};
 
-        const updated = await Task.findByIdAndUpdate(taskId, updates, {
-            new: true, 
-            runValidators: true,
-        })
-        
-        if(!updated) return res.status(404).json({error: "Task not found"})
+export const deleteTask = async (req, res) => {
+  const task = await Task.findById(req.params.taskId);
+  if (!task) return res.status(404).json({ message: "Task not found" });
+  const project = await Project.findById(task.projectId);
+  if (req.user.role !== "admin" && String(project.createdBy) !== req.user.id)
+    return res.status(403).json({ message: "Forbidden" });
 
-        return res.json(updated)
-        
-    }catch(err){
-        return res.status(400).json({error: err.message || "Failed to update Task!"})
-    }
-}
-
-/*
-    DELETE /api/tasks/:taskId
-*/
-
-export const deleteTask = async (req, res)=>{
-    try{
-        const {taskId} = req.params
-        const deleted = await Task.findByIdAndDelete(taskId)
-        if(!deleted) {
-            return res.status(404).json({ error: "Task not found" });
-        }
-
-        return res.json({message: "Task deleted successfully"})
-
-    }catch(err){
-        return res.status(400).json({error: err.message || "Failed to delete Task!"})
-    }
-}
-
-/*
-    Helper: compute tasks summary for a project
-    Returns: {todo, inProgess, done, total}
-*/
-
-export const getTaskSummaryForProject = async (projectId) => {
-  // Validate id to avoid cast errors
-  if (!mongoose.Types.ObjectId.isValid(projectId)) {
-    return { todo: 0, inProgress: 0, done: 0, total: 0 };
-  }
-
-  const rows = await Task.aggregate([
-    { $match: { projectId: new mongoose.Types.ObjectId(projectId) } },
-    { $group: { _id: "$status", count: { $sum: 1 } } },
-  ]);
-
-  const map = rows.reduce((acc, r) => ((acc[r._id] = r.count), acc), {});
-  const todo = map["todo"] || 0;
-  const inProgress = map["in-progress"] || 0;
-  const done = map["done"] || 0;
-
-  return { todo, inProgress, done, total: todo + inProgress + done };
+  await task.deleteOne();
+  res.json({ ok: true });
 };
