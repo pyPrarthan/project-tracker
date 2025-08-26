@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projects.js";
 import taskRoutes from './routes/tasks.js';
