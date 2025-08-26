@@ -8,7 +8,15 @@ import projectRoutes from "./routes/projects.js";
 import taskRoutes from "./routes/tasks.js";
 
 const app = express();
-app.use(cors());
+
+// index.js (or app.js if you centralize app creation)
+const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+
+app.use(cors({
+  origin: CLIENT_ORIGIN,
+  credentials: true,
+}));
+
 app.use(express.json());
 
 // Health
